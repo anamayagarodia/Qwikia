@@ -53,7 +53,8 @@ function sendMessage(event) {
         if(!error && response.statusCode === 200) {
           var items = JSON.parse(body).items;
           var itemsCount = items.length;
-          for(var i = 0; i < 50; i++) {
+          var noOfQs = (itemsCount < 50)? itemsCount : 50;
+          for(var i = 0; i < noOfQs; i++) {
             rand = Math.random();
             rand *= itemsCount;
             articles.push(items[Math.floor(rand)].id);
