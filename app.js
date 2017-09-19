@@ -19,23 +19,41 @@ const server = app.listen(process.env.PORT || 3000, () => {
 
 function sendMessage(event) {
     let sender = event.sender.id;
-    let text = event.message.text;
+    var topic = event.message.text;
+    var articles =[];
 
-    request({
-        url: 'https://graph.facebook.com/v2.10/me/messages',
-        qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
-        method: 'POST',
-        json: {
-            recipient: {id: sender},
-            message: {text: text}
-        }
-    }, function (error, response) {
-        if (error) {
-            console.log('Error sending message: ', error);
-        } else if (response.body.error) {
-            console.log('Error: ', response.body.error);
-        }
+    function getFiftyArticles() {
+      var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
+      var rand;
+      // Create list of 250 popular articles
+      request.get(siteUrl, function(error, response, body) {
+        if(!error && response.statusCode === 200) {
+          var items = JSON.parse(body).items;
+          var itemsCount = items.length;
+          for(var i = 0; i < 50; i++) {
+            rand = Math.random();
+            rand *= itemsCount;
+            articles.push(items[Math.floor(rand)].id);
+          }
+          request({
+            url: 'https://graph.facebook.com/v2.10/me/messages',
+            qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
+            method: 'POST',
+            json: {
+                recipient: {id: sender},
+                message: {text: articles[0]}
+            }
+          }, function (error, response) {
+            if (error) {
+              console.log('Error sending message: ', error);
+            } else if (response.body.error) {
+              console.log('Error: ', response.body.error);
+            }
+        });
+      }
     });
+  }
+  getFiftyArticles();
 }
 
 app.get('/webhook', (req, res) => {
