@@ -28,14 +28,15 @@ function sendMessage(event) {
         request.get(siteUrl, function(error, response, body) {
           if(!error && response.statusCode === 200) {
             var sections = JSON.parse(body).sections;
+            console.log(sections[0].content[0].text);
             articlesData.push(sections[0].content[0].text);
           }
         });
-      }, function (error, response) {
-        if (error) {
-          console.log('Error sending message: ', error);
-        } else if (response.body.error) {
-          console.log('Error: ', response.body.error);
+      }, function (err) {
+        if (err) {
+          return callback(null);
+        } else {
+          return callback(articlesData);
         }
       });
       callback(articlesData);
