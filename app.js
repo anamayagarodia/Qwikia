@@ -56,6 +56,8 @@ function sendMessage(event) {
             articles.push(items[Math.floor(rand)].id);
           }
           get50Questions(articles, function(articlesData) {
+            console.log("\n\n\nREACHED MESSAGE FUNCTION");
+            console.log(articlesData[0]);
             request({
             url: 'https://graph.facebook.com/v2.10/me/messages',
             qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
