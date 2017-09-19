@@ -36,6 +36,7 @@ function sendMessage(event) {
         if (err) {
           return callback(null);
         } else {
+          console.log("\n\n\nBLAH");
           return callback(articlesData);
         }
       });
