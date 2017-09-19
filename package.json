@@ -1,0 +1,25 @@
+{
+  "name": "qwikia",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anamayagarodia/Qwikia.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/anamayagarodia/Qwikia/issues"
+  },
+  "homepage": "https://github.com/anamayagarodia/Qwikia#readme",
+  "dependencies": {
+    "async": "^2.5.0",
+    "body-parser": "^1.18.1",
+    "express": "^4.15.4",
+    "request": "^2.81.0"
+  }
+}
