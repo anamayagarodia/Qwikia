@@ -21,9 +21,9 @@ function sendMessage(event) {
     let sender = event.sender.id;
     var topic = event.message.text;
     var articles =[];
-    var articlesData = [];
-
+    
     function get50Questions(articles, callback) {
+      var articlesData = [];      
       async.forEachOf(articles, function ( value, key, callback) {
         var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value;
         request.get(siteUrl, function(error, response, body) {
@@ -33,7 +33,7 @@ function sendMessage(event) {
           }
         });
       });
-      callback();
+      callback(articlesData);
     }
     function getFiftyArticles() {
       var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
