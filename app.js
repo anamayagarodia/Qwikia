@@ -20,7 +20,6 @@ const server = app.listen(process.env.PORT || 3000, () => {
 function sendMessage(event) {
     let sender = event.sender.id;
     var topic = event.message.text;
-    var articles =[];
     
     function get50Questions(articles, callback) {
       var articlesData = [];      
@@ -29,13 +28,14 @@ function sendMessage(event) {
         request.get(siteUrl, function(error, response, body) {
           if(!error && response.statusCode === 200) {
             var sections = JSON.parse(body).sections;
-            articlesData[0] = sections[0].content[0].text;
+            articlesData.push(sections[0].content[0].text);
           }
         });
       });
       callback(articlesData);
     }
     function getFiftyArticles() {
+      var articles =[];
       var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
       var rand;
       // Create list of 250 popular articles
