@@ -21,7 +21,19 @@ function sendMessage(event) {
     let sender = event.sender.id;
     var topic = event.message.text;
     var articles =[];
+    var articlesData = [];
 
+    function get50Questions(articles, callback) {
+      async.forEachOf(articles, function ( value, key, callback) {
+        var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value;
+        request.get(siteUrl, function(error, response, body) {
+          if(!error && response.statusCode === 200) {
+            var sections = JSON.parse(body).sections;
+            articlesData[0] = sections[0].content[0].text;
+          }
+        });
+      });
+    }
     function getFiftyArticles() {
       var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
       var rand;
@@ -35,13 +47,14 @@ function sendMessage(event) {
             rand *= itemsCount;
             articles.push(items[Math.floor(rand)].id);
           }
-          request({
+          get50Questions(articles, function(articlesData) {
+            request({
             url: 'https://graph.facebook.com/v2.10/me/messages',
             qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
             method: 'POST',
             json: {
                 recipient: {id: sender},
-                message: {text: articles[0]}
+                message: {text: articlesData[0]}
             }
           }, function (error, response) {
             if (error) {
@@ -50,6 +63,8 @@ function sendMessage(event) {
               console.log('Error: ', response.body.error);
             }
         });
+          });
+          
       }
     });
   }
