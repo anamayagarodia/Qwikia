@@ -41,8 +41,8 @@ function sendMessage(event) {
           return callback(articlesData);
         }
       });
-      callback(articlesData);
     }
+    
     function getFiftyArticles() {
       var articles =[];
       var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
