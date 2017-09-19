@@ -33,6 +33,7 @@ function sendMessage(event) {
           }
         });
       });
+      callback();
     }
     function getFiftyArticles() {
       var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
