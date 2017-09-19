@@ -28,12 +28,12 @@ function sendMessage(event) {
         request.get(siteUrl, function(error, response, body) {
           if(!error && response.statusCode === 200) {
             var sections = JSON.parse(body).sections;
-            console.log(sections[0].content[0].text);
+            //console.log(sections[0].content[0].text);
             if(sections[key]) {
               for(var i = 0; i < sections.length; i++) {
                 if(sections[key].content[i]) {
                   if(sections[key].content[i].text) {
-                    articlesData.push(sections[key].content[key].text);
+                    articlesData.push(sections[key].content[i].text);
                     break;
                   }
                 }
@@ -67,7 +67,7 @@ function sendMessage(event) {
             articles.push(items[Math.floor(rand)].id);
           }
           get50Questions(articles, function(articlesData) {
-            if(articlesData.length > 1) {
+            if(articlesData.length >= 1) {
               console.log(articlesData[0]);
               request({
                 url: 'https://graph.facebook.com/v2.10/me/messages',
