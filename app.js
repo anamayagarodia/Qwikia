@@ -30,6 +30,7 @@ function sendMessage(event) {
             var sections = JSON.parse(body).sections;
             console.log(sections[0].content[0].text);
             articlesData.push(sections[0].content[0].text);
+            callback();
           }
         });
       }, function (err) {
@@ -42,7 +43,7 @@ function sendMessage(event) {
         }
       });
     }
-    
+
     function getFiftyArticles() {
       var articles =[];
       var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
