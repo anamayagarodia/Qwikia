@@ -34,6 +34,7 @@ function sendMessage(event) {
         });
       }, function (err) {
         if (err) {
+          console.log("\n\n\nBLAHERROR");
           return callback(null);
         } else {
           console.log("\n\n\nBLAH");
