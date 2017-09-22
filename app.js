@@ -123,10 +123,7 @@ function sendMessage(event) {
                     var length = key.length;
                     console.log(length);
                     var newText = articlesData[0];
-                    var blank='';
-                    for(var i = 0; i < length; i++) {
-                        blank+='_';
-                    }
+                    var blank='_______';
                     newText = articlesData[0].substr(0,index) + blank + articlesData[0].substr(index+length);
                     request({
                           url: 'https://graph.facebook.com/v2.10/me/messages',
