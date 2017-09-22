@@ -18,9 +18,22 @@ const server = app.listen(process.env.PORT || 3000, () => {
     console.log('Express server listening on port %d in %s mode', server.address().port, app.settings.env);
 });
 
+
 function sendMessage(event) {
     let sender = event.sender.id;
     var topic = event.message.text.replace(/\s/g, "") ;
+    
+    function wikiNotFoundError() {
+      request({
+        url: 'https://graph.facebook.com/v2.10/me/messages',
+        qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
+        method: 'POST',
+        json: {
+          recipient: {id: sender},
+          message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
+        }
+      });
+    }
     
     function get50Questions(articles, callback) {
       var articlesData = [];      
@@ -32,15 +45,7 @@ function sendMessage(event) {
               var sections = JSON.parse(body).sections;
             }
             catch (e) {
-              request({
-                url: 'https://graph.facebook.com/v2.10/me/messages',
-                qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
-                method: 'POST',
-                json: {
-                  recipient: {id: sender},
-                  message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
-                }
-              });
+              wikiNotFoundError();
               return;
             }
             //console.log(sections[0].content[0].text);
@@ -88,15 +93,7 @@ function sendMessage(event) {
             var items = JSON.parse(body).items;
           }
           catch (e) {
-            request({
-              url: 'https://graph.facebook.com/v2.10/me/messages',
-              qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
-              method: 'POST',
-              json: {
-                recipient: {id: sender},
-                message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
-              }
-            });
+            wikiNotFoundError();
             return;
           }
           var itemsCount = items.length;
@@ -151,15 +148,7 @@ function sendMessage(event) {
                         });
                       }
                       else {
-                        request({
-                          url: 'https://graph.facebook.com/v2.10/me/messages',
-                          qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
-                          method: 'POST',
-                          json: {
-                            recipient: {id: sender},
-                            message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
-                          }
-                        });
+                        wikiNotFoundError();
                       }
                       }
             });
