@@ -68,7 +68,52 @@ function sendMessage(event) {
             articles.push(items[Math.floor(rand)].id);
           }
           get50Questions(articles, function(articlesData) {
-            question.getQuestionFromText(articlesData[0], topic);
+            var YOUR_API_KEY = 'AIzaSyAgWYqV90V6NCI3CUNWStkwH9-rPRsnt4M';
+            var siteUrl = 'https://language.googleapis.com/v1beta2/documents:analyzeEntities?key='+YOUR_API_KEY;
+            var options =
+            {
+                url: siteUrl,
+                method: 'POST',
+                body:
+                {
+                    "document":
+                    {
+                      "type":"PLAIN_TEXT",
+                      "language": "EN",
+                      "content": articlesData[0]
+                    },
+                    "encodingType":"UTF8"
+                },
+                json: true
+            }
+            request(options, function (error, response, body) {
+                if(!error && response.statusCode === 200) {
+                    var data = body.entities;
+                    data.sort(function(a, b){
+                        return b.salience - a.salience;
+                    });
+                    console.log(data);
+                    var key = data[0].name;
+                    var index = data[0].mentions[0].text.beginOffset;
+                    var length = key.length;
+                    console.log(length);
+                    var newText = articlesData[0];
+                    var blank='';
+                    for(var i = 0; i < length; i++) {
+                        blank+='_';
+                    }
+                    newText = articlesData[0].substr(0,index) + blank + articlesData[0].substr(index+length);
+                    request({
+                          url: 'https://graph.facebook.com/v2.10/me/messages',
+                          qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
+                          method: 'POST',
+                          json: {
+                            recipient: {id: sender},
+                            message: {text: newText}
+                          }
+                        });
+                      }
+            });
           });
         }
       });
