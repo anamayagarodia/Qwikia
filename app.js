@@ -20,7 +20,7 @@ const server = app.listen(process.env.PORT || 3000, () => {
 
 function sendMessage(event) {
     let sender = event.sender.id;
-    var topic = event.message.text;
+    var topic = event.message.text.replace(/\s/g, "") ;
     
     function get50Questions(articles, callback) {
       var articlesData = [];      
