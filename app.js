@@ -31,7 +31,7 @@ function sendMessage(event) {
             try {
               var sections = JSON.parse(body).sections;
             }
-            catch {
+            catch (e) {
               request({
                 url: 'https://graph.facebook.com/v2.10/me/messages',
                 qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
@@ -41,6 +41,7 @@ function sendMessage(event) {
                   message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
                 }
               });
+              return;
             }
             //console.log(sections[0].content[0].text);
             if(sections[key]) {
