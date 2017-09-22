@@ -84,7 +84,21 @@ function sendMessage(event) {
       // Create list of 250 popular articles
       request.get(siteUrl, function(error, response, body) {
         if(!error && response.statusCode === 200) {
-          var items = JSON.parse(body).items;
+          try {
+            var items = JSON.parse(body).items;
+          }
+          catch (e) {
+            request({
+              url: 'https://graph.facebook.com/v2.10/me/messages',
+              qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
+              method: 'POST',
+              json: {
+                recipient: {id: sender},
+                message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
+              }
+            });
+            return;
+          }
           var itemsCount = items.length;
           var noOfQs = (itemsCount < 50)? itemsCount : 50;
           for(var i = 0; i < noOfQs; i++) {
