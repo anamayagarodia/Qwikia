@@ -139,7 +139,7 @@ function sendMessage(event) {
                     console.log(length);
                     var newText = articlesData[0];
                     var blank='_______';
-                    newText = articlesData[0].substr(0,index) + blank + articlesData[0].substr(index+length);
+                    newText = articlesData[0].substring(0,index) + blank + articlesData[0].substring(index+length);
                     request({
                           url: 'https://graph.facebook.com/v2.10/me/messages',
                           qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
