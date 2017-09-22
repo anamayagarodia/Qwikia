@@ -93,6 +93,7 @@ function sendMessage(event) {
                         return b.salience - a.salience;
                     });
                     console.log(data);
+                    if(data.length > 1) {
                     var key = data[0].name;
                     var index = data[0].mentions[0].text.beginOffset;
                     var length = key.length;
@@ -112,6 +113,18 @@ function sendMessage(event) {
                             message: {text: newText}
                           }
                         });
+                      }
+                      else {
+                        request({
+                          url: 'https://graph.facebook.com/v2.10/me/messages',
+                          qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
+                          method: 'POST',
+                          json: {
+                            recipient: {id: sender},
+                            message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
+                          }
+                        });
+                      }
                       }
             });
           });
