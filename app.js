@@ -9,6 +9,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request');
 const async = require('async');
+var question = require('./question.js');
 const app =express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true}));
@@ -67,18 +68,7 @@ function sendMessage(event) {
             articles.push(items[Math.floor(rand)].id);
           }
           get50Questions(articles, function(articlesData) {
-            if(articlesData.length >= 1) {
-              console.log(articlesData[0]);
-              request({
-                url: 'https://graph.facebook.com/v2.10/me/messages',
-                qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
-                method: 'POST',
-                json: {
-                  recipient: {id: sender},
-                  message: {text: articlesData[0]}
-                }
-              });
-            }
+            question.getQuestionFromText(articlesData[0], topic);
           });
         }
       });
