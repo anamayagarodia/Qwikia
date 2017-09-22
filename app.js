@@ -28,7 +28,20 @@ function sendMessage(event) {
         var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value;
         request.get(siteUrl, function(error, response, body) {
           if(!error && response.statusCode === 200) {
-            var sections = JSON.parse(body).sections;
+            try {
+              var sections = JSON.parse(body).sections;
+            }
+            else {
+              request({
+                url: 'https://graph.facebook.com/v2.10/me/messages',
+                qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
+                method: 'POST',
+                json: {
+                  recipient: {id: sender},
+                  message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
+                }
+              });
+            }
             //console.log(sections[0].content[0].text);
             if(sections[key]) {
               for(var i = 0; i < sections.length; i++) {
