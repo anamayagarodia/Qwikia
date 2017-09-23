@@ -89,7 +89,7 @@ function sendMessage(event) {
           var newText = articlesData[0];
           var blank = '_______';
           newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
-
+          console.log('ANSWER: ' + key);
           request({
             url: 'https://graph.facebook.com/v2.10/me/messages',
             qs: { access_token: FACEBOOK_ACCESS_TOKEN },
