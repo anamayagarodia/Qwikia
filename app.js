@@ -14,14 +14,15 @@ const server = app.listen(process.env.PORT || 3000, () => {
 
 
 function sendMessage(event) {
-  var GOOGLE_API_KEY = 'AIzaSyAgWYqV90V6NCI3CUNWStkwH9-rPRsnt4M';
-  var FACEBOOK_ACCESS_TOKEN = '';
+  var GOOGLE_API_KEY = process.env.GOOGLE_API_KEY; //'AIzaSyAgWYqV90V6NCI3CUNWStkwH9-rPRsnt4M';
+  var FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
+  var FACEBOOK_VERIFICATION_TOKEN = process.env.FACEBOOK_VERIFICATION_TOKEN;
   let sender = event.sender.id;
   var topic = event.message.text.replace(/\s/g, ""); // Removing whitespace from input to use in request url
   function wikiNotFoundError() { // generalized error message when no data for questions is found
     request({
       url: 'https://graph.facebook.com/v2.10/me/messages',
-      qs: { access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD' },
+      qs: { access_token: 'FACEBOOK_ACCESS_TOKEN' },
       method: 'POST',
       json: {
         recipient: { id: sender },
@@ -59,7 +60,7 @@ function sendMessage(event) {
           console.log(JSON.stringify(body));
           request({
             url: 'https://graph.facebook.com/v2.10/me/messages',
-            qs: { access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD' },
+            qs: { access_token: 'FACEBOOK_ACCESS_TOKEN' },
             method: 'POST',
             json: {
               recipient: { id: sender },
@@ -133,7 +134,7 @@ function sendMessage(event) {
                 newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
                 request({
                   url: 'https://graph.facebook.com/v2.10/me/messages',
-                  qs: { access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD' },
+                  qs: { access_token: 'FACEBOOK_ACCESS_TOKEN' },
                   method: 'POST',
                   json: {
                     recipient: { id: sender },
@@ -150,24 +151,11 @@ function sendMessage(event) {
       }
     });
   }
-  var options =
-    {
-      header: 'Accept: application/vnd.heroku+json; version=3',
-      url: 'https://api.heroku.com/apps/qwikia/config-vars',
-      method: 'GET'
-    }
-  request(options, function (error, response, body) {
-    if (!error && response.statusCode === 200) {
-      console.log(body);
-      getFiftyArticles();
-    } else {
-      console.log("Error in config vars");
-    }
-  });
+  getFiftyArticles();
 }
 
 app.get('/webhook', (req, res) => { // For Facebook Webhook Verification
-  if (req.query['hub.mode'] && req.query['hub.verify_token'] === 'tuxedo_cat') {
+  if (req.query['hub.mode'] && req.query['hub.verify_token'] === FACEBOOK_VERIFICATION_TOKEN) {
     res.status(200).send(req.query['hub.challenge']);
   } else {
     res.status(403).end();
