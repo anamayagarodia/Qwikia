@@ -58,22 +58,26 @@ function sendMessage(event) {
         if (data.length > 1) {
           var key = data[0].name;
           var index = data[0].mentions[0].text.beginOffset;
-          for(var j = 0; j<data[i].mentions.length; j++) {
-            if(data[i].mentions[j].text.content === key && data[i].mentions[j].type === "PROPER") {
+          for (var j = 0; j < data[i].mentions.length; j++) {
+            if (data[i].mentions[j].text.content === key && data[i].mentions[j].type === "PROPER") {
               key = data[i].name;
               index = data[i].mentions[0].text.beginOffset;
               break;
             }
           }
           for (var i = 1; i < data.length; i++) {
-            for(var j = 0; j<data[i].mentions.length; j++) {
-              if(data[i].mentions[j].text.content === key && data[i].mentions[j].type === "PROPER") {
-                key = data[i].name;
-                index = data[i].mentions[j].text.beginOffset;
-                break;
+            if (data[i]) {
+              for (var j = 0; j < data[i].mentions.length; j++) {
+                if (data[i].mentions[j]) {
+                  if (data[i].mentions[j].text.content === key && data[i].mentions[j].type === "PROPER") {
+                    key = data[i].name;
+                    index = data[i].mentions[j].text.beginOffset;
+                    break;
+                  }
+                }
               }
             }
-            if(key != data[0].name) {
+            if (key != data[0].name) {
               break;
             }
           }
