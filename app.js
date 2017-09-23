@@ -58,12 +58,12 @@ function sendMessage(event) {
         if (data.length > 1) {
           var key = data[0].name;
           var index = data[0].mentions[0].text.beginOffset;
-          if (data[i]) {
+          if (data[0]) {
             for (var j = 0; j < data[i].mentions.length; j++) {
               if (data[0].mentions[j]) {
-                if (data[i].mentions[j].text.content === key && data[i].mentions[j].type === "PROPER") {
-                  key = data[i].name;
-                  index = data[i].mentions[0].text.beginOffset;
+                if (data[0].mentions[j].text.content === key && data[i].mentions[j].type === "PROPER") {
+                  key = data[0].name;
+                  index = data[0].mentions[j].text.beginOffset;
                   break;
                 }
               }
