@@ -17,12 +17,13 @@ function sendMessage(event) {
   var GOOGLE_API_KEY = process.env.GOOGLE_API_KEY; //'AIzaSyAgWYqV90V6NCI3CUNWStkwH9-rPRsnt4M';
   var FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
   var FACEBOOK_VERIFICATION_TOKEN = process.env.FACEBOOK_VERIFICATION_TOKEN;
+  console.log
   let sender = event.sender.id;
   var topic = event.message.text.replace(/\s/g, ""); // Removing whitespace from input to use in request url
   function wikiNotFoundError() { // generalized error message when no data for questions is found
     request({
       url: 'https://graph.facebook.com/v2.10/me/messages',
-      qs: { access_token: 'FACEBOOK_ACCESS_TOKEN' },
+      qs: { access_token: FACEBOOK_ACCESS_TOKEN },
       method: 'POST',
       json: {
         recipient: { id: sender },
@@ -60,7 +61,7 @@ function sendMessage(event) {
           console.log(JSON.stringify(body));
           request({
             url: 'https://graph.facebook.com/v2.10/me/messages',
-            qs: { access_token: 'FACEBOOK_ACCESS_TOKEN' },
+            qs: { access_token: FACEBOOK_ACCESS_TOKEN },
             method: 'POST',
             json: {
               recipient: { id: sender },
@@ -134,7 +135,7 @@ function sendMessage(event) {
                 newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
                 request({
                   url: 'https://graph.facebook.com/v2.10/me/messages',
-                  qs: { access_token: 'FACEBOOK_ACCESS_TOKEN' },
+                  qs: { access_token: FACEBOOK_ACCESS_TOKEN },
                   method: 'POST',
                   json: {
                     recipient: { id: sender },
