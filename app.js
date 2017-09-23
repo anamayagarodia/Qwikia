@@ -157,8 +157,8 @@ function sendMessage(event) {
           rand *= itemsCount;
           articles.push(items[Math.floor(rand)].id);
         }
-        get50Questions(articles, function () {
-          return sendQuestion(articlesData);
+        get50Questions(articles, function (articlesData) {
+          sendQuestion(articlesData);
         });
       }
     });
