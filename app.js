@@ -73,7 +73,7 @@ function sendMessage(event) {
             if (data[i]) {
               for (var j = 0; j < data[i].mentions.length; j++) {
                 if (data[i].mentions[j]) {
-                  if (data[i].mentions[j].text.content === key && data[i].mentions[j].type === "PROPER") {
+                  if (data[i].mentions[j].text.content === data[i].name && data[i].mentions[j].type === "PROPER") {
                     key = data[i].name;
                     index = data[i].mentions[j].text.beginOffset;
                     break;
