@@ -16,7 +16,6 @@ const server = app.listen(process.env.PORT || 3000, () => {
 function sendMessage(event) {
   var GOOGLE_API_KEY = 'AIzaSyAgWYqV90V6NCI3CUNWStkwH9-rPRsnt4M';
   var FACEBOOK_ACCESS_TOKEN = '';
-  var 
     let sender = event.sender.id;
     var topic = event.message.text.replace(/\s/g, ""); // Removing whitespace from input to use in request url
     
