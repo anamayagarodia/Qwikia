@@ -17,13 +17,10 @@ function sendMessage(event) {
   var GOOGLE_API_KEY = process.env.GOOGLE_API_KEY; //'AIzaSyAgWYqV90V6NCI3CUNWStkwH9-rPRsnt4M';
   var FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
   var FACEBOOK_VERIFICATION_TOKEN = process.env.FACEBOOK_VERIFICATION_TOKEN;
-  console.log(GOOGLE_API_KEY);
-  console.log(FACEBOOK_ACCESS_TOKEN);
-  console.log(FACEBOOK_VERIFICATION_TOKEN);
   let sender = event.sender.id;
   var topic = event.message.text.replace(/\s/g, ""); // Removing whitespace from input to use in request url
   function wikiNotFoundError() { // generalized error message when no data for questions is found
-    request({
+    request({ // request to facebook page to send error message
       url: 'https://graph.facebook.com/v2.10/me/messages',
       qs: { access_token: FACEBOOK_ACCESS_TOKEN },
       method: 'POST',
@@ -34,42 +31,100 @@ function sendMessage(event) {
     });
   }
 
-  function get50Questions(articles, callback) {
-    var articlesData = [];
-    async.forEachOf(articles, function (value, key, callback) {
-      var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value;
-      request.get(siteUrl, function (error, response, body) {
-        if (!error && response.statusCode === 200) {
-          try {
-            var sections = JSON.parse(body).sections;
-          }
-          catch (e) {
-            wikiNotFoundError();
-            return;
-          }
-          //console.log(sections[0].content[0].text);
-          if (sections[key]) {
-            for (var i = 0; i < sections.length; i++) {
-              if (sections[key].content[i]) {
-                if (sections[key].content[i].text) {
-                  articlesData.push(sections[key].content[i].text);
-                  break;
-                }
-              }
+  function sendQuestion(articlesData) {
+    var siteUrl = 'https://language.googleapis.com/v1beta2/documents:analyzeEntities?key=' + GOOGLE_API_KEY; // Google NLP API url
+    var options =
+      {
+        url: siteUrl,
+        method: 'POST',
+        body:
+        {
+          "document":
+          {
+            "type": "PLAIN_TEXT",
+            "language": "EN",
+            "content": articlesData[0] // first text paragraph in first article for now
+          },
+          "encodingType": "UTF8"
+        },
+        json: true
+      }
+    request(options, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        var data = body.entities;
+        data.sort(function (a, b) { // sorting entities according to their salience
+          return b.salience - a.salience;
+        });
+        if (data.length > 1) {
+          var key = data[0].name;
+          var index = data[0].mentions[0].text.beginOffset;
+          for(var j = 0; j<data[i].mantions.length; j++) {
+            if(data[i].mentions[j].text.content === key && data[i].mentions[j].type === "PROPER") {
+              key = data[i].name;
+              index = data[i].mentions[0].text.beginOffset;
+              break;
             }
           }
-          callback();
-        } else {
-          console.log(JSON.stringify(body));
+          for (var i = 1; i < data.length; i++) {
+            for(var j = 0; j<data[i].mantions.length; j++) {
+              if(data[i].mentions[j].text.content === key && data[i].mentions[j].type === "PROPER") {
+                key = data[i].name;
+                index = data[i].mentions[j].text.beginOffset;
+                break;
+              }
+            }
+            if(key != data[0].name) {
+              break;
+            }
+          }
+          var length = key.length;
+          var newText = articlesData[0];
+          var blank = '_______';
+          newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
+
           request({
             url: 'https://graph.facebook.com/v2.10/me/messages',
             qs: { access_token: FACEBOOK_ACCESS_TOKEN },
             method: 'POST',
             json: {
               recipient: { id: sender },
-              message: { text: 'I\'m sorry. I did not receive any data. Please try again!' }
+              message: { text: newText }
             }
           });
+        }
+        else {
+          wikiNotFoundError();
+        }
+      }
+    });
+  }
+
+  function get50Questions(articles, callback) {
+    var articlesData = [];
+    async.forEachOf(articles, function (value, key, callback) {
+      var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value; // wikia API url
+      request.get(siteUrl, function (error, response, body) {
+        if (!error && response.statusCode === 200) {
+          try {
+            var sections = JSON.parse(body).sections; // get all the sections in the article
+          }
+          catch (e) {
+            wikiNotFoundError();
+            return;
+          }
+          for (var i = 0; i < sections.length; i++) {
+            if (sections[i]) { //if the section has data
+              if (sections[i].content[0]) { // if the content has data
+                if (sections[i].content[0].text) { // if the text exists
+                  articlesData.push(sections[i].content[0].text);
+                  break;
+                }
+              }
+            }
+          }
+          callback(); // sendQuestion()
+        } else {
+          wikiNotFoundError();
         }
       });
     }, function (err) {
@@ -102,55 +157,7 @@ function sendMessage(event) {
           rand *= itemsCount;
           articles.push(items[Math.floor(rand)].id);
         }
-        get50Questions(articles, function (articlesData) {
-          var siteUrl = 'https://language.googleapis.com/v1beta2/documents:analyzeEntities?key=' + GOOGLE_API_KEY;
-          var options =
-            {
-              url: siteUrl,
-              method: 'POST',
-              body:
-              {
-                "document":
-                {
-                  "type": "PLAIN_TEXT",
-                  "language": "EN",
-                  "content": articlesData[0]
-                },
-                "encodingType": "UTF8"
-              },
-              json: true
-            }
-          request(options, function (error, response, body) {
-            if (!error && response.statusCode === 200) {
-              var data = body.entities;
-              data.sort(function (a, b) {
-                return b.salience - a.salience;
-              });
-              console.log(data);
-              if (data.length > 1) {
-                var key = data[0].name;
-                var index = data[0].mentions[0].text.beginOffset;
-                var length = key.length;
-                console.log(length);
-                var newText = articlesData[0];
-                var blank = '_______';
-                newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
-                request({
-                  url: 'https://graph.facebook.com/v2.10/me/messages',
-                  qs: { access_token: FACEBOOK_ACCESS_TOKEN },
-                  method: 'POST',
-                  json: {
-                    recipient: { id: sender },
-                    message: { text: newText }
-                  }
-                });
-              }
-              else {
-                wikiNotFoundError();
-              }
-            }
-          });
-        });
+        get50Questions(articles, sendQuestion(articlesData));
       }
     });
   }
@@ -166,7 +173,6 @@ app.get('/webhook', (req, res) => { // For Facebook Webhook Verification
 });
 
 app.post('/webhook', (req, res) => {
-  console.log(req.body);
   if (req.body.object === 'page') {
     req.body.entry.forEach((entry) => {
       entry.messaging.forEach((event) => {
