@@ -1,307 +1,196 @@
-/// CURRENT CODE
-
-
-/*-----------------------------------------------------------------------------
-A simple echo bot for the Microsoft Bot Framework. 
------------------------------------------------------------------------------*/
 'use strict'
 const express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request');
 const async = require('async');
 var question = require('./question.js');
-const app =express();
+const app = express();
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const server = app.listen(process.env.PORT || 3000, () => {
-    console.log('Express server listening on port %d in %s mode', server.address().port, app.settings.env);
+  console.log('Express server listening on port %d in %s mode', server.address().port, app.settings.env);
 });
 
 
 function sendMessage(event) {
-    let sender = event.sender.id;
-    var topic = event.message.text.replace(/\s/g, "") ;
-    
-    function wikiNotFoundError() {
-      request({
-        url: 'https://graph.facebook.com/v2.10/me/messages',
-        qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
+  var GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+  var FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
+  var FACEBOOK_VERIFICATION_TOKEN = process.env.FACEBOOK_VERIFICATION_TOKEN;
+  let sender = event.sender.id;
+  var topic = event.message.text.replace(/\s/g, ""); // Removing whitespace from input to use in request url
+  function wikiNotFoundError() { // generalized error message when no data for questions is found
+    request({ // request to facebook page to send error message
+      url: 'https://graph.facebook.com/v2.10/me/messages',
+      qs: { access_token: FACEBOOK_ACCESS_TOKEN },
+      method: 'POST',
+      json: {
+        recipient: { id: sender },
+        message: { text: 'I\'m sorry. I did not receive any data. Please try again!' }
+      }
+    });
+  }
+
+  function sendQuestion(articlesData) {
+    var siteUrl = 'https://language.googleapis.com/v1beta2/documents:analyzeEntities?key=' + GOOGLE_API_KEY; // Google NLP API url
+    var options =
+      {
+        url: siteUrl,
         method: 'POST',
-        json: {
-          recipient: {id: sender},
-          message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
-        }
-      });
-    }
-    
-    function get50Questions(articles, callback) {
-      var articlesData = [];      
-      async.forEachOf(articles, function ( value, key, callback) {
-        var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value;
-        request.get(siteUrl, function(error, response, body) {
-          if(!error && response.statusCode === 200) {
-            try {
-              var sections = JSON.parse(body).sections;
+        body:
+        {
+          "document":
+          {
+            "type": "PLAIN_TEXT",
+            "language": "EN",
+            "content": articlesData[0] // first text paragraph in first article for now
+          },
+          "encodingType": "UTF8"
+        },
+        json: true
+      }
+    request(options, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        var data = body.entities;
+        data.sort(function (a, b) { // sorting entities according to their salience
+          return b.salience - a.salience;
+        });
+        if (data.length > 1) {
+          var key = data[0].name;
+          var index = data[0].mentions[0].text.beginOffset;
+          if (data[0]) {
+            for (var j = 0; j < data[0].mentions.length; j++) {
+              if (data[0].mentions[j]) {
+                if (data[0].mentions[j].text.content === key && data[0].mentions[j].type === "PROPER") {
+                  key = data[0].name;
+                  index = data[0].mentions[j].text.beginOffset;
+                  break;
+                }
+              }
             }
-            catch (e) {
-              wikiNotFoundError();
-              return;
-            }
-            //console.log(sections[0].content[0].text);
-            if(sections[key]) {
-              for(var i = 0; i < sections.length; i++) {
-                if(sections[key].content[i]) {
-                  if(sections[key].content[i].text) {
-                    articlesData.push(sections[key].content[i].text);
+          }
+          for (var i = 1; i < data.length; i++) {
+            if (data[i]) {
+              for (var j = 0; j < data[i].mentions.length; j++) {
+                if (data[i].mentions[j]) {
+                  if (data[i].mentions[j].text.content === data[i].name && data[i].mentions[j].type === "PROPER") {
+                    key = data[i].name;
+                    index = data[i].mentions[j].text.beginOffset;
                     break;
                   }
                 }
               }
             }
-            callback();
-          } else {
-            console.log(JSON.stringify(body));
-            request({
-              url: 'https://graph.facebook.com/v2.10/me/messages',
-              qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
-              method: 'POST',
-              json: {
-                recipient: {id: sender},
-                message: {text: 'I\'m sorry. I did not receive any data. Please try again!'}
-              }
-            });
+            if (key != data[0].name) {
+              break;
+            }
           }
-        });
-      }, function (err) {
-        if (err) {
-          return callback(null);
-        } else {
-          return callback(articlesData);
+          var length = key.length;
+          var newText = articlesData[0];
+          var blank = '_______';
+          newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
+          console.log('ANSWER: ' + key);
+          request({
+            url: 'https://graph.facebook.com/v2.10/me/messages',
+            qs: { access_token: FACEBOOK_ACCESS_TOKEN },
+            method: 'POST',
+            json: {
+              recipient: { id: sender },
+              message: { text: newText }
+            }
+          });
         }
-      });
-    }
+        else {
+          wikiNotFoundError();
+        }
+      }
+    });
+  }
 
-    function getFiftyArticles() {
-      var articles =[];
-      var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
-      var rand;
-      // Create list of 250 popular articles
-      request.get(siteUrl, function(error, response, body) {
-        if(!error && response.statusCode === 200) {
+  function get50Questions(articles, callback) {
+    var articlesData = [];
+    async.forEachOf(articles, function (value, key, callback) {
+      var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value; // wikia API url
+      request.get(siteUrl, function (error, response, body) {
+        if (!error && response.statusCode === 200) {
           try {
-            var items = JSON.parse(body).items;
+            var sections = JSON.parse(body).sections; // get all the sections in the article
           }
           catch (e) {
             wikiNotFoundError();
             return;
           }
-          var itemsCount = items.length;
-          var noOfQs = (itemsCount < 50)? itemsCount : 50;
-          for(var i = 0; i < noOfQs; i++) {
-            rand = Math.random();
-            rand *= itemsCount;
-            articles.push(items[Math.floor(rand)].id);
-          }
-          get50Questions(articles, function(articlesData) {
-            var YOUR_API_KEY = 'AIzaSyAgWYqV90V6NCI3CUNWStkwH9-rPRsnt4M';
-            var siteUrl = 'https://language.googleapis.com/v1beta2/documents:analyzeEntities?key='+YOUR_API_KEY;
-            var options =
-            {
-                url: siteUrl,
-                method: 'POST',
-                body:
-                {
-                    "document":
-                    {
-                      "type":"PLAIN_TEXT",
-                      "language": "EN",
-                      "content": articlesData[0]
-                    },
-                    "encodingType":"UTF8"
-                },
-                json: true
+          for (var i = 0; i < sections.length; i++) {
+            if (sections[i]) { //if the section has data
+              if (sections[i].content[0]) { // if the content has data
+                if (sections[i].content[0].text) { // if the text exists
+                  articlesData.push(sections[i].content[0].text);
+                  break;
+                }
+              }
             }
-            request(options, function (error, response, body) {
-                if(!error && response.statusCode === 200) {
-                    var data = body.entities;
-                    data.sort(function(a, b){
-                        return b.salience - a.salience;
-                    });
-                    console.log(data);
-                    if(data.length > 1) {
-                    var key = data[0].name;
-                    var index = data[0].mentions[0].text.beginOffset;
-                    var length = key.length;
-                    console.log(length);
-                    var newText = articlesData[0];
-                    var blank='_______';
-                    newText = articlesData[0].substring(0,index) + blank + articlesData[0].substring(index+length);
-                    request({
-                          url: 'https://graph.facebook.com/v2.10/me/messages',
-                          qs: {access_token: 'EAARiEsAuvXEBAHvp6kDS4bAcyIrkudgRZCieT78BWO7ZAsbfAzIdkjMe7EJlv731DezS6Ic5crJs2OOTZCIVXVf3GijGjnwzNRkcZAwJHJaFPfdERSsp9dvZCuKUnCchIEZCjE9BOv58Pcc6EdrKV3wSK5lkKkDLhqGFjwjUua0gZDZD'},
-                          method: 'POST',
-                          json: {
-                            recipient: {id: sender},
-                            message: {text: newText}
-                          }
-                        });
-                      }
-                      else {
-                        wikiNotFoundError();
-                      }
-                      }
-            });
-          });
+          }
+          callback(); // sendQuestion()
+        } else {
+          wikiNotFoundError();
         }
       });
-    }
-  getFiftyArticles();
-}
-
-app.get('/webhook', (req, res) => {
-    if (req.query['hub.mode'] && req.query['hub.verify_token'] === 'tuxedo_cat') {
-        res.status(200).send(req.query['hub.challenge']);
-    } else {
-        res.status(403).end();
-    }
-});
-
-
-app.post('/webhook', (req, res) => {
-    console.log(req.body);
-    if (req.body.object === 'page') {
-        req.body.entry.forEach((entry) => {
-            entry.messaging.forEach((event) => {
-                if (event.message && event.message.text) {
-                    sendMessage(event);
-                }
-            });
-        });
-        res.status(200).end();
-    }
-});
-
-/* var bot = new builder.UniversalBot(connector, function (session) {
-  function processElements(arr, str){
-    if(arr.length == 0) {
-      return str;
-    }
-    else {
-      for(var i = 0; i < arr.length; i++) {
-        str+=arr[i].text;
-        processElements(arr[i].elements, str);
+    }, function (err) {
+      if (err) {
+        return callback(null);
+      } else {
+        return callback(articlesData);
       }
-      return str;
-    }
+    });
   }
-  var topic = session.message.text;
-  var articles = [];
-  var questions = [];
+
   function getFiftyArticles() {
+    var articles = [];
     var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
     var rand;
     // Create list of 250 popular articles
-    request.get(siteUrl, function(error, response, body) {
-      if(!error && response.statusCode === 200) {
-        var items = JSON.parse(body).items;
+    request.get(siteUrl, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        try {
+          var items = JSON.parse(body).items;
+        }
+        catch (e) {
+          wikiNotFoundError();
+          return;
+        }
         var itemsCount = items.length;
-        for(var i = 0; i < 50 i++) {
+        var noOfQs = (itemsCount < 50) ? itemsCount : 50;
+        for (var i = 0; i < noOfQs; i++) {
           rand = Math.random();
           rand *= itemsCount;
           articles.push(items[Math.floor(rand)].id);
         }
-        get50Questions(articles, function(articlesData) {
-          getNLPData(articlesData);
+        get50Questions(articles, function (articlesData) {
+          sendQuestion(articlesData);
         });
       }
     });
   }
-  function findTriviaSection(sections) {
-    for(var i = 0; i < sections.length; i++){
-      if(sections[i].title === "Trivia") return i;
-    }
-    return -1;
+  getFiftyArticles();
+}
+
+app.get('/webhook', (req, res) => { // For Facebook Webhook Verification
+  if (req.query['hub.mode'] && req.query['hub.verify_token'] === FACEBOOK_VERIFICATION_TOKEN) {
+    res.status(200).send(req.query['hub.challenge']);
+  } else {
+    res.status(403).end();
   }
-  function get50Questions(articles, callback) {
-    var articlesData = [];
-    async.forEachOf(articles, function ( value, key, callback) {
-      var textArray = [];
-      var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value;
-      request.get(siteUrl, function(error, response, body) {
-        if(!error && response.statusCode === 200) {
-          var sections = JSON.parse(body).sections;
-          // Look for Trivia section
-          var triviaIndex = findTriviaSection(sections);
-          var triviaText = '';
-          if(triviaIndex > -1) {
-            var content = sections[triviaIndex].content;
-            for(var j = 0; j < content.length; j++) {
-              if(content[j].type === "paragraph") {
-                triviaText+=content[j].text;
-                triviaText+=" ";
-              }
-              else if(content[j].type === "list") {
-                triviaText+=processElements(content[j].elements, '');
-              }
-              else {
-                console.log("!!!!!!!!!NEW TYPE DETECTED!!!!!!!!");
-              }
-            }
-            textArray.push(triviaText);
-          } else {
-            var summary = sections[0].content;
-            var summaryText = '';
-            for(var j = 0; j < summary.length; j++) {
-              if(summary[j].type === "paragraph") {
-                summaryText += summary[j].text;
-              } else if(summary[j].type === "list") {
-                summaryText+=processElements(summary[j].elements, '');
-              } else {
-                console.log("!!!!!!!!!NEW TYPE DETECTED!!!!!!!!");
-              }
-            }
-            // Can't find Trivia section
-            for(var i = 1; i < sections.length; i++) {
-              var content = sections[i].content;
-              var text = '';
-              for(var j = 0; j < content.length; j++) {
-                if(content[j].type === "paragraph") {
-                  text+=content[j].text;
-                }
-                else if(content[j].type === "list") {
-                  text+=processElements(content[j].elements, '');
-                }
-                else {
-                  console.log("!!!!!!!!!NEW TYPE DETECTED!!!!!!!!");
-                }
-              }
-              textArray.push(text)
-              
-            }
-            
-          }
-          var articleData = new Object();
-          if(triviaText.length > 0) {
-            summaryText = triviaText;
-          }
-          articleData["summary"] = summaryText;
-          articleData["rest"] = textArray;
-          articlesData.push(articleData);
-          callback();
+});
+
+app.post('/webhook', (req, res) => {
+  if (req.body.object === 'page') {
+    req.body.entry.forEach((entry) => {
+      entry.messaging.forEach((event) => {
+        if (event.message && event.message.text) {
+          sendMessage(event);
         }
       });
-    },
-    function (err) {
-      if(err)
-      return callback(null);
-      else {
-        return callback(articlesData);
-      }
-    })
+    });
+    res.status(200).end();
   }
-  function getNLPData(articlesData) {
-    session.send(articlesData);
-  }
-  getFiftyArticles();
-}); */
+});
