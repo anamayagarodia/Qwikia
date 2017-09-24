@@ -14,7 +14,7 @@ const server = app.listen(process.env.PORT || 3000, () => {
 
 
 function sendMessage(event) {
-  var GOOGLE_API_KEY = process.env.GOOGLE_API_KEY; //'AIzaSyAgWYqV90V6NCI3CUNWStkwH9-rPRsnt4M';
+  var GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
   var FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
   var FACEBOOK_VERIFICATION_TOKEN = process.env.FACEBOOK_VERIFICATION_TOKEN;
   let sender = event.sender.id;
