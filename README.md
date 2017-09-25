@@ -1,6 +1,6 @@
 # Qwikia
 
-A Facebook Messenger bot that uses the Qwikia api to get articles about the topic that YOU choose, and generate questions from them on the fly.
+A Facebook Messenger bot that uses the Wikia API to get articles about the topic that YOU choose, and generate questions from them on the fly.
 
 # Why I made this bot
 
