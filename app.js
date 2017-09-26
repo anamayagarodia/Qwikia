@@ -81,7 +81,7 @@ function sendMessage(event) {
                 }
               }
             }
-            if (key != data[0].name) {
+            if (key != data[0].name && topic != key.replace(/\s/g, "")) {
               break;
             }
           }
