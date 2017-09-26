@@ -85,10 +85,17 @@ function sendMessage(event) {
               break;
             }
           }
-          var length = key.length;
-          var newText = articlesData[0];
+          //var length = key.length;
+          var newText = '';
           var blank = '_______';
-          newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
+          var arrAns = articlesData[0].split(key);
+          for(var i in arrAns) {
+            newText += arrAns[i];
+            if(i < arrAns.length - 1) {
+              newText += blank;
+            }
+          }
+          //newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
           console.log('ANSWER: ' + key);
           request({
             url: 'https://graph.facebook.com/v2.10/me/messages',
