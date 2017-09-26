@@ -81,7 +81,7 @@ function sendMessage(event) {
                 }
               }
             }
-            if (key != data[0].name && topic != key.replace(/\s/g, "")) {
+            if (key != data[0].name && topic.toLowerCase() != key.replace(/\s/g, "").toLowerCase()) {
               break;
             }
           }
