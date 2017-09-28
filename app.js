@@ -8,6 +8,8 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const DEBUG = true;
+
 const server = app.listen(process.env.PORT || 3000, () => {
   console.log('Express server listening on port %d in %s mode', server.address().port, app.settings.env);
 });
@@ -56,6 +58,7 @@ function sendMessage(event) {
           return b.salience - a.salience;
         });
         if (data.length > 1) {
+          var blank='_______';
           var key = data[0].name;
           var index = data[0].mentions[0].text.beginOffset;
           if (data[0]) {
@@ -88,6 +91,8 @@ function sendMessage(event) {
           //var length = key.length;
           var newText = '';
           var blank = '_______';
+          
+          // Insert blanks into all occurrences of answer within question
           var arrAns = articlesData[0].split(key);
           for(var i in arrAns) {
             newText += arrAns[i];
@@ -95,6 +100,7 @@ function sendMessage(event) {
               newText += blank;
             }
           }
+          
           //newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
           console.log('ANSWER: ' + key);
           request({
