@@ -60,19 +60,48 @@ function sendMessage(event) {
         if (data.length > 1) {
           var blank='_______';
           var key = data[0].name;
-          console.log(key.length);
-
+          var index = data[0].mentions[0].text.beginOffset;
+          if (data[0]) {
+            for (var j = 0; j < data[0].mentions.length; j++) {
+              if (data[0].mentions[j]) {
+                if (data[0].mentions[j].text.content === key && data[0].mentions[j].type === "PROPER") {
+                  key = data[0].name;
+                  index = data[0].mentions[j].text.beginOffset;
+                  break;
+                }
+              }
+            }
+          }
+          for (var i = 1; i < data.length; i++) {
+            if (data[i]) {
+              for (var j = 0; j < data[i].mentions.length; j++) {
+                if (data[i].mentions[j]) {
+                  if (data[i].mentions[j].text.content === data[i].name && data[i].mentions[j].type === "PROPER") {
+                    key = data[i].name;
+                    index = data[i].mentions[j].text.beginOffset;
+                    break;
+                  }
+                }
+              }
+            }
+            if (key != data[0].name && topic.toLowerCase() != key.replace(/\s/g, "").toLowerCase()) {
+              break;
+            }
+          }
+          //var length = key.length;
           var newText = '';
-          if(DEBUG) newText += key + ':::\n\n';
-
+          var blank = '_______';
+          
           // Insert blanks into all occurrences of answer within question
           var arrAns = articlesData[0].split(key);
-          for(var i in arrAns){
+          for(var i in arrAns) {
             newText += arrAns[i];
-            if(i < arrAns.length - 1){
+            if(i < arrAns.length - 1) {
               newText += blank;
             }
           }
+          
+          //newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
           console.log('ANSWER: ' + key);
           request({
             url: 'https://graph.facebook.com/v2.10/me/messages',
