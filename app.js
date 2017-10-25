@@ -125,8 +125,8 @@ function sendMessage(event) {
                 if (DBTopic.questions[i].question == newText) {
                   foundQ = true;
                   qIndex = i;
-                  for (var j = 0; j < DBTopic.questions[i].question.users.length; j++) {
-                    if (DBTopic.questiona[i].question.users[j].user == sender) {
+                  for (var j = 0; j < DBTopic.questions[i].users.length; j++) {
+                    if (DBTopic.questions[i].users[j].user == sender) {
                       foundS = true;
                       break;
                     }
