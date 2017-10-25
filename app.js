@@ -25,25 +25,14 @@ function sendMessage(event) {
   var Topic = require("./models/topic");
   let sender = event.sender.id;
   var topic = event.message.text.replace(/\s/g, ""); // Removing whitespace from input to use in request url
-  function wikiNotFoundError() { // generalized error message when no data for questions is found
+  function errorMessage(errorM) {
     request({ // request to facebook page to send error message
       url: 'https://graph.facebook.com/v2.10/me/messages',
       qs: { access_token: FACEBOOK_ACCESS_TOKEN },
       method: 'POST',
       json: {
         recipient: { id: sender },
-        message: { text: 'I\'m sorry. I did not receive any data. Please try again!' }
-      }
-    });
-  }
-  function alreadyAsked() { // generalized error message when no data for questions is found
-    request({ // request to facebook page to send error message
-      url: 'https://graph.facebook.com/v2.10/me/messages',
-      qs: { access_token: FACEBOOK_ACCESS_TOKEN },
-      method: 'POST',
-      json: {
-        recipient: { id: sender },
-        message: { text: 'I\'m sorry. I have already asked you this question. Please try again!' }
+        message: { text: errorM }
       }
     });
   }
@@ -148,7 +137,7 @@ function sendMessage(event) {
               var options = { upsert: true };
               Topic.findOneAndUpdate(query, update, options, function (err, top) {
                 if (err) {
-                  alreadyAsked();
+                  errorMessage('I\'m sorry. Question Update failed!');
                 } else {
                   console.log('ANSWER: ' + key);
                   request({
@@ -170,7 +159,7 @@ function sendMessage(event) {
               var options = { upsert: true };
               Topic.findOneAndUpdate(query, update, options, function (err, top) {
                 if (err) {
-                  alreadyAsked();;
+                  errorMessage('I\'m sorry. User update failed');
                 } else {
                   console.log('ANSWER: ' + key);
                   request({
@@ -185,11 +174,11 @@ function sendMessage(event) {
                 }
               });
             } else {
-              alreadyAsked();
+              errorMessage('I\'m sorry. I have already asked you this question. Please try again!');
             }
           });
         } else {
-          wikiNotFoundError();
+          errorMessage('I\'m sorry. I did not receive any data. Please try again!');
         }
       }
     });
@@ -205,7 +194,7 @@ function get50Questions(articles, callback) {
           var sections = JSON.parse(body).sections; // get all the sections in the article
         }
         catch (e) {
-          wikiNotFoundError();
+          errorMessage('I\'m sorry. I did not receive any data. Please try again!');
           return;
         }
         for (var i = 0; i < sections.length; i++) {
@@ -220,7 +209,7 @@ function get50Questions(articles, callback) {
         }
         callback(); // sendQuestion()
       } else {
-        wikiNotFoundError();
+        errorMessage('I\'m sorry. I did not receive any data. Please try again!');
       }
     });
   }, function (err) {
@@ -243,7 +232,7 @@ function getFiftyArticles() {
         var items = JSON.parse(body).items;
       }
       catch (e) {
-        wikiNotFoundError();
+        errorMessage('I\'m sorry. I did not receive any data. Please try again!');
         return;
       }
       var itemsCount = items.length;
