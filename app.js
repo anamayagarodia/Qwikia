@@ -115,11 +115,11 @@ function sendMessage(event) {
               newText += blank;
             }
           }
-          var query = { topic: topic };
-          var foundQ = false;
-          var foundS = false;
-          var qIndex = 0;
           Topic.findOne({ topic: topic }, function (err, DBTopic) {
+            var query = { topic: topic };
+            var foundQ = false;
+            var foundS = false;
+            var qIndex = 0;
             if (DBTopic) {
               for (var i = 0; i < DBTopic.questions.length; i++) {
                 if (DBTopic.questions[i].question == newText) {
