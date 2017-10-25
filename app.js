@@ -148,7 +148,7 @@ function sendMessage(event) {
               var options = { upsert: true };
               Topic.findOneAndUpdate(query, update, options, function (err, top) {
                 if (err) {
-                  wikiNotFoundError();
+                  alreadyAsked();
                 } else {
                   console.log('ANSWER: ' + key);
                   request({
@@ -170,7 +170,7 @@ function sendMessage(event) {
               var options = { upsert: true };
               Topic.findOneAndUpdate(query, update, options, function (err, top) {
                 if (err) {
-                  wikiNotFoundError();
+                  alreadyAsked();;
                 } else {
                   console.log('ANSWER: ' + key);
                   request({
