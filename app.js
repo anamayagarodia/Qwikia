@@ -73,7 +73,7 @@ function sendMessage(event) {
           return b.salience - a.salience;
         });
         if (data.length > 1) {
-          var blank='_______';
+          var blank = '_______';
           var key = data[0].name;
           var index = data[0].mentions[0].text.beginOffset;
           if (data[0]) {
@@ -106,157 +106,160 @@ function sendMessage(event) {
           //var length = key.length;
           var newText = '';
           var blank = '_______';
-          
+
           // Insert blanks into all occurrences of answer within question
           var arrAns = articlesData[0].split(key);
-          for(var i in arrAns) {
+          for (var i in arrAns) {
             newText += arrAns[i];
-            if(i < arrAns.length - 1) {
+            if (i < arrAns.length - 1) {
               newText += blank;
             }
           }
-          var query = {topic: topic};
+          var query = { topic: topic };
           var foundQ = false;
           var foundS = false;
           var qIndex = 0;
-          for(var i = 0; i < query.questions.length; i++) {
-            if(query.questions[i].question==newText) {
-              foundQ=true;
-              qIndex = i;
-              for(var j = 0; j < query.questions[i].question.users.length; j++) {
-                if(query.questiona[i].question.users[j].user == sender) {
-                  foundS = true;
-                  break;
-                }
-              }
-              break;
-            }
-          }
-          var update;
-          var question = {
-            question: newText,
-            users: [{user: sender}]
-          } 
-          if(!foundQ) {
-            update = {
-              topic: topic,
-              $push: { questions: question }
-            }
-            var options = {upsert: true};
-            Topic.findOneAndUpdate(query, update, options, function(err, top) {
-              if(err) {
-                wikiNotFoundError();
-              } else {
-                console.log('ANSWER: ' + key);
-                request({
-                  url: 'https://graph.facebook.com/v2.10/me/messages',
-                  qs: { access_token: FACEBOOK_ACCESS_TOKEN },
-                  method: 'POST',
-                  json: {
-                    recipient: { id: sender },
-                    message: { text: newText }
+          Topic.findOne({ topic: topic }, function (err, DBTopic) {
+            if (DBTopic) {
+              for (var i = 0; i < DBTopic.questions.length; i++) {
+                if (DBTopic.questions[i].question == newText) {
+                  foundQ = true;
+                  qIndex = i;
+                  for (var j = 0; j < DBTopic.questions[i].question.users.length; j++) {
+                    if (DBTopic.questiona[i].question.users[j].user == sender) {
+                      foundS = true;
+                      break;
+                    }
                   }
-                });
-              }
-            });
-          } else if(!foundS) {
-            var str = "questions."+qIndex+".users";
-            update = {
-              $push: { str: {user: sender}}
-            }
-            var options = {upsert: true};
-            Topic.findOneAndUpdate(query, update, options, function(err, top) {
-              if(err) {
-                wikiNotFoundError();
-              } else {
-                console.log('ANSWER: ' + key);
-                request({
-                  url: 'https://graph.facebook.com/v2.10/me/messages',
-                  qs: { access_token: FACEBOOK_ACCESS_TOKEN },
-                  method: 'POST',
-                  json: {
-                    recipient: { id: sender },
-                    message: { text: newText }
-                  }
-                });
-              }
-            });
-          } else {
-            alreadyAsked();
-          }
-        }
-        else {
-          wikiNotFoundError();
-        }
-      }
-    });
-  }
-
-  function get50Questions(articles, callback) {
-    var articlesData = [];
-    async.forEachOf(articles, function (value, key, callback) {
-      var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value; // wikia API url
-      request.get(siteUrl, function (error, response, body) {
-        if (!error && response.statusCode === 200) {
-          try {
-            var sections = JSON.parse(body).sections; // get all the sections in the article
-          }
-          catch (e) {
-            wikiNotFoundError();
-            return;
-          }
-          for (var i = 0; i < sections.length; i++) {
-            if (sections[i]) { //if the section has data
-              if (sections[i].content[0]) { // if the content has data
-                if (sections[i].content[0].text) { // if the text exists
-                  articlesData.push(sections[i].content[0].text);
                   break;
                 }
               }
             }
-          }
-          callback(); // sendQuestion()
+            var update;
+            var question = {
+              question: newText,
+              users: [{ user: sender }]
+            }
+            if (!foundQ) {
+              update = {
+                topic: topic,
+                $push: { questions: question }
+              }
+              var options = { upsert: true };
+              Topic.findOneAndUpdate(query, update, options, function (err, top) {
+                if (err) {
+                  wikiNotFoundError();
+                } else {
+                  console.log('ANSWER: ' + key);
+                  request({
+                    url: 'https://graph.facebook.com/v2.10/me/messages',
+                    qs: { access_token: FACEBOOK_ACCESS_TOKEN },
+                    method: 'POST',
+                    json: {
+                      recipient: { id: sender },
+                      message: { text: newText }
+                    }
+                  });
+                }
+              });
+            } else if (!foundS) {
+              var str = "questions." + qIndex + ".users";
+              update = {
+                $push: { str: { user: sender } }
+              }
+              var options = { upsert: true };
+              Topic.findOneAndUpdate(query, update, options, function (err, top) {
+                if (err) {
+                  wikiNotFoundError();
+                } else {
+                  console.log('ANSWER: ' + key);
+                  request({
+                    url: 'https://graph.facebook.com/v2.10/me/messages',
+                    qs: { access_token: FACEBOOK_ACCESS_TOKEN },
+                    method: 'POST',
+                    json: {
+                      recipient: { id: sender },
+                      message: { text: newText }
+                    }
+                  });
+                }
+              });
+            } else {
+              alreadyAsked();
+            }
+          });
         } else {
           wikiNotFoundError();
         }
-      });
-    }, function (err) {
-      if (err) {
-        return callback(null);
-      } else {
-        return callback(articlesData);
       }
     });
   }
 
-  function getFiftyArticles() {
-    var articles = [];
-    var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
-    var rand;
-    // Create list of 250 popular articles
+function get50Questions(articles, callback) {
+  var articlesData = [];
+  async.forEachOf(articles, function (value, key, callback) {
+    var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/AsSimpleJson?id=' + value; // wikia API url
     request.get(siteUrl, function (error, response, body) {
       if (!error && response.statusCode === 200) {
         try {
-          var items = JSON.parse(body).items;
+          var sections = JSON.parse(body).sections; // get all the sections in the article
         }
         catch (e) {
           wikiNotFoundError();
           return;
         }
-        var itemsCount = items.length;
-        var noOfQs = (itemsCount < 50) ? itemsCount : 50;
-        for (var i = 0; i < noOfQs; i++) {
-          rand = Math.random();
-          rand *= itemsCount;
-          articles.push(items[Math.floor(rand)].id);
+        for (var i = 0; i < sections.length; i++) {
+          if (sections[i]) { //if the section has data
+            if (sections[i].content[0]) { // if the content has data
+              if (sections[i].content[0].text) { // if the text exists
+                articlesData.push(sections[i].content[0].text);
+                break;
+              }
+            }
+          }
         }
-        get50Questions(articles, function (articlesData) {
-          sendQuestion(articlesData);
-        });
+        callback(); // sendQuestion()
+      } else {
+        wikiNotFoundError();
       }
     });
-  }
-  getFiftyArticles();
+  }, function (err) {
+    if (err) {
+      return callback(null);
+    } else {
+      return callback(articlesData);
+    }
+  });
+}
+
+function getFiftyArticles() {
+  var articles = [];
+  var siteUrl = 'http://' + topic + '.wikia.com/api/v1/Articles/Top?Limit=250';
+  var rand;
+  // Create list of 250 popular articles
+  request.get(siteUrl, function (error, response, body) {
+    if (!error && response.statusCode === 200) {
+      try {
+        var items = JSON.parse(body).items;
+      }
+      catch (e) {
+        wikiNotFoundError();
+        return;
+      }
+      var itemsCount = items.length;
+      var noOfQs = (itemsCount < 50) ? itemsCount : 50;
+      for (var i = 0; i < noOfQs; i++) {
+        rand = Math.random();
+        rand *= itemsCount;
+        articles.push(items[Math.floor(rand)].id);
+      }
+      get50Questions(articles, function (articlesData) {
+        sendQuestion(articlesData);
+      });
+    }
+  });
+}
+getFiftyArticles();
 }
 
 app.get('/webhook', (req, res) => { // For Facebook Webhook Verification
