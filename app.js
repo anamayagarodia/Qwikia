@@ -135,7 +135,7 @@ function sendMessage(event) {
           var update;
           var question = {
             question: newText,
-            users = [{user: sender}]
+            users: [{user: sender}]
           } 
           if(!foundQ) {
             update = {
@@ -162,7 +162,7 @@ function sendMessage(event) {
           } else if(!foundS) {
             var str = "questions."+qIndex+".users";
             update = {
-              $push: { str: sender}
+              $push: { str: {user: sender}}
             }
             var options = {upsert: true};
             Topic.findOneAndUpdate(query, update, options, function(err, top) {
