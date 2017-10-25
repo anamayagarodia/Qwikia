@@ -119,7 +119,7 @@ function sendMessage(event) {
           var foundQ = false;
           var foundS = false;
           var qIndex = 0;
-          for(var i = 0; i < query.questions.length; i++) {
+          /*for(var i = 0; i < query.questions.length; i++) {
             if(query.questions[i].question==newText) {
               foundQ=true;
               qIndex = i;
@@ -131,7 +131,7 @@ function sendMessage(event) {
               }
               break;
             }
-          }
+          }*/
           var update;
           var question = {
             question: newText,
