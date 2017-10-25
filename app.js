@@ -135,7 +135,7 @@ function sendMessage(event) {
           var update;
           var question = {
             question: newText,
-            users = [sender]
+            users = [{user: sender}]
           } 
           if(!foundQ) {
             update = {
