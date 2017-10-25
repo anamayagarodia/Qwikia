@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const request = require('request');
 const async = require('async');
 var question = require('./question.js');
+var mongoose = require('mongoose');
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,6 +20,9 @@ function sendMessage(event) {
   var GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
   var FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
   var FACEBOOK_VERIFICATION_TOKEN = process.env.FACEBOOK_VERIFICATION_TOKEN;
+  var MONGODB_URI = process.env.MONGODB_URI;
+  var db = mongoose.connect(MONGODB_URI);
+  var Topic = require("./models/topic");
   let sender = event.sender.id;
   var topic = event.message.text.replace(/\s/g, ""); // Removing whitespace from input to use in request url
   function wikiNotFoundError() { // generalized error message when no data for questions is found
@@ -29,6 +33,17 @@ function sendMessage(event) {
       json: {
         recipient: { id: sender },
         message: { text: 'I\'m sorry. I did not receive any data. Please try again!' }
+      }
+    });
+  }
+  function alreadyAsked() { // generalized error message when no data for questions is found
+    request({ // request to facebook page to send error message
+      url: 'https://graph.facebook.com/v2.10/me/messages',
+      qs: { access_token: FACEBOOK_ACCESS_TOKEN },
+      method: 'POST',
+      json: {
+        recipient: { id: sender },
+        message: { text: 'I\'m sorry. I have already asked you this question. Please try again!' }
       }
     });
   }
@@ -100,18 +115,75 @@ function sendMessage(event) {
               newText += blank;
             }
           }
-          
-          //newText = articlesData[0].substring(0, index) + blank + articlesData[0].substring(index + length);
-          console.log('ANSWER: ' + key);
-          request({
-            url: 'https://graph.facebook.com/v2.10/me/messages',
-            qs: { access_token: FACEBOOK_ACCESS_TOKEN },
-            method: 'POST',
-            json: {
-              recipient: { id: sender },
-              message: { text: newText }
+          var query = {topic: topic};
+          var foundQ = false;
+          var foundS = false;
+          var qIndex = 0;
+          for(var i = 0; i < query.questions.length; i++) {
+            if(query.questions[i].question==newText) {
+              foundQ=true;
+              qIndex = i;
+              for(var j = 0; j < query.questions[i].question.users.length; j++) {
+                if(query.questiona[i].question.users[j].user == sender) {
+                  foundS = true;
+                  break;
+                }
+              }
+              break;
             }
-          });
+          }
+          var update;
+          var question = {
+            question: newText,
+            users = [sender]
+          } 
+          if(!foundQ) {
+            update = {
+              topic: topic,
+              $push: { questions: question }
+            }
+            var options = {upsert: true};
+            Topic.findOneAndUpdate(query, update, options, function(err, top) {
+              if(err) {
+                wikiNotFoundError();
+              } else {
+                console.log('ANSWER: ' + key);
+                request({
+                  url: 'https://graph.facebook.com/v2.10/me/messages',
+                  qs: { access_token: FACEBOOK_ACCESS_TOKEN },
+                  method: 'POST',
+                  json: {
+                    recipient: { id: sender },
+                    message: { text: newText }
+                  }
+                });
+              }
+            });
+          } else if(!foundS) {
+            var str = "questions."+qIndex+".users";
+            update = {
+              $push: { str: sender}
+            }
+            var options = {upsert: true};
+            Topic.findOneAndUpdate(query, update, options, function(err, top) {
+              if(err) {
+                wikiNotFoundError();
+              } else {
+                console.log('ANSWER: ' + key);
+                request({
+                  url: 'https://graph.facebook.com/v2.10/me/messages',
+                  qs: { access_token: FACEBOOK_ACCESS_TOKEN },
+                  method: 'POST',
+                  json: {
+                    recipient: { id: sender },
+                    message: { text: newText }
+                  }
+                });
+              }
+            });
+          } else {
+            alreadyAsked();
+          }
         }
         else {
           wikiNotFoundError();
